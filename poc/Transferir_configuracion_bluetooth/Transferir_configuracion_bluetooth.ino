@@ -17,7 +17,11 @@ class MyCallbacks : public BLECharacteristicCallbacks {
             DynamicJsonDocument doc(512);
             DeserializationError error = deserializeJson(doc, value);
             if (!error) {
-                Serial.println("Bien al parsear JSON.");
+                serializeJson(doc, Serial);
+                String wifi_ssid = doc["wifi_ssid"];
+                String wifi_password = doc["wifi_password"];
+                Serial.println("SSID: " + wifi_ssid);
+                Serial.println("Password: " + wifi_password);
 
                 
             } else {
@@ -49,8 +53,4 @@ void setup() {
 
 void loop() {
  
-
- NRF Connect
-
-
 }
