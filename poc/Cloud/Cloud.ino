@@ -5,17 +5,18 @@
 
 SHTC3 mySHTC3;
 
-const char* ssid = "MOVISTAR_F390";
-const char* password = "EXPf8CSuGxHSs9fXSiwG";
+const char* ssid = "";
+const char* password = "";
 
 const char* serverName = "https://api.thingspeak.com/update";
-const char* apiKey = "ZJQ8JFL7XHGQK4CH";
+const char* apiKey = "";
 
 void setup() {
     Serial.begin(115200);
     Serial.println("Intentando conectar a Wi-Fi...");
 
     WiFi.begin(ssid, password);
+    Wire.begin();
     unsigned long startTime = millis();
     
     while (WiFi.status() != WL_CONNECTED && millis() - startTime < 15000) {
@@ -31,17 +32,20 @@ void setup() {
         Serial.println("\nNo se pudo conectar a Wi-Fi. Iniciando AP...");
     }
 
-    if (mySHTC3.begin() != SHTC3_Status_Nominal) {
-        Serial.println("Error al inicializar el sensor SHTC3");
-    } else {
-        Serial.println("Sensor SHTC3 inicializado correctamente");
+    if (mySHTC3.begin() != 0) {
+      Serial.println("Error al inicializar el sensor SHTC3.");
+      while (1); 
     }
+
+    Serial.println("Sensor SHTC3 inicializado correctamente.");
 }
 
 void loop() {
     if (WiFi.status() == WL_CONNECTED) {
         SHTC3_Status_TypeDef result = mySHTC3.update();
 
+      if(mySHTC3.lastStatus == SHTC3_Status_Nominal)
+      {
         float temp = mySHTC3.toDegC();
         float humidity = mySHTC3.toPercent();
 
@@ -50,12 +54,10 @@ void loop() {
         Serial.print(" °C, Humedad: ");
         Serial.print(humidity);
         Serial.println(" %");
-
         HTTPClient http;
         String url = String(serverName) + "?api_key=" + apiKey + "&field1=" + temp + "&field2=" + humidity;
         http.begin(url);
         int httpCode = http.GET();
-
         if (httpCode > 0) {
             Serial.print("HTTP Response code: ");
             Serial.println(httpCode);
@@ -65,6 +67,9 @@ void loop() {
             Serial.println(httpCode);
         }
         http.end();
+      }
+
+
     } else {
         Serial.println("Wi-Fi desconectado. Reintentando...");
         WiFi.reconnect();
