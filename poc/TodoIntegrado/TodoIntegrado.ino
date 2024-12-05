@@ -108,8 +108,6 @@ void setup() {
 
   ssid = preferences.getString("ssid", "");
   password = preferences.getString("password", "");
-  ssid="";
-  password="";
 
   if (ssid != "" && password != "") {
     Serial.println("Intentando conectar a Wi-Fi...");
