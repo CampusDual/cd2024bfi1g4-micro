@@ -26,16 +26,77 @@ const char index_html[] PROGMEM = R"rawliteral(
 <!DOCTYPE html>
 <html>
 <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Captive Portal</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f7f9fc;
+      color: #333;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .container {
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+      max-width: 400px;
+      width: 100%;
+      text-align: center;
+    }
+    h1 {
+      font-size: 1.8em;
+      color: #333;
+      margin-bottom: 0.5em;
+    }
+    p {
+      color: #555;
+      margin-bottom: 1.5em;
+    }
+    form {
+      display: flex;
+      flex-direction: column;
+    }
+    input[type="text"], input[type="password"] {
+      font-size: 1em;
+      padding: 10px;
+      margin-bottom: 15px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    input[type="submit"] {
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      font-size: 1em;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    input[type="submit"]:hover {
+      background-color: #45a049;
+    }
+  </style>
 </head>
 <body>
-  <h1>Welcome to the Captive Portal</h1>
-  <p>Please configure your Wi-Fi below:</p>
-  <form action="/setWiFi" method="POST">
-    SSID: <input type="text" name="ssid"><br>
-    Password: <input type="password" name="password"><br>
-    <input type="submit" value="Save">
-  </form>
+  <div class="container">
+    <h1>Bienvenido</h1>
+    <p>Configuracion del wifi</p>
+    <form action="/setWiFi" method="POST">
+      <input type="text" name="ssid" placeholder="Nombre WiFi" required>
+      <input type="password" name="password" placeholder="Contraseña" required>
+      <input type="submit" value="Save">
+    </form>
+  </div>
 </body>
 </html>
 )rawliteral";
@@ -47,28 +108,15 @@ void setup() {
 
   ssid = preferences.getString("ssid", "");
   password = preferences.getString("password", "");
+  ssid="";
+  password="";
 
   if (ssid != "" && password != "") {
     Serial.println("Intentando conectar a Wi-Fi...");
     WiFi.begin(ssid.c_str(), password.c_str());
-    unsigned long startTime = millis();
     
-    while (WiFi.status() != WL_CONNECTED && millis() - startTime < 15000) {
-      delay(1000);
-      Serial.print(".");
-    }
+    WiFiConecction();
 
-    if (WiFi.status() == WL_CONNECTED) {
-      Serial.println("Conexión Wi-Fi exitosa!");
-      Serial.print("IP del dispositivo: ");
-      Serial.println(WiFi.localIP());
-    } else {
-      Serial.println("No se pudo conectar a Wi-Fi. Iniciando AP...");
-      WiFi.softAP(apSSID, apPassword);
-      Serial.print("IP del AP: ");
-      Serial.println(WiFi.softAPIP());
-      startCaptivePortal();
-    }
   } else {
     WiFi.softAP(apSSID, apPassword);
     Serial.println("Configurando Access Point...");
@@ -127,12 +175,28 @@ void startCaptivePortal() {
       preferences.putString("password", password);
       Serial.println("Credenciales Wi-Fi guardadas en la memoria NVS.");
 
-      request->send(200, "text/html", "<html><body><h2>Conexión Wi-Fi exitosa! Reiniciando...</h2></body></html>");
+      request->send(200, "text/html", "<html><body><h2>Conexion Wi-Fi exitosa! Reiniciando...</h2></body></html>");
 
       WiFi.begin(ssid.c_str(), password.c_str());
-      unsigned long startTime = millis();
       
-      while (WiFi.status() != WL_CONNECTED && millis() - startTime < 15000) {
+      WiFiConecction();
+
+    } else {
+      request->send(400, "text/html", "<html><body><h2>Error: Las credenciales no son validas.</h2></body></html>");
+    }
+  });
+
+  server.onNotFound([](AsyncWebServerRequest *request) {
+    request->send(200, "text/html", index_html);
+  });
+
+  server.begin();
+}
+
+void WiFiConecction() {
+
+  unsigned long startTime = millis();
+   while (WiFi.status() != WL_CONNECTED && millis() - startTime < 15000) {
         delay(1000);
         Serial.println("Conectando a Wi-Fi...");
       }
@@ -148,15 +212,4 @@ void startCaptivePortal() {
         Serial.println(WiFi.softAPIP());
         startCaptivePortal();
       }
-
-    } else {
-      request->send(400, "text/html", "<html><body><h2>Error: Las credenciales no son válidas.</h2></body></html>");
-    }
-  });
-
-  server.onNotFound([](AsyncWebServerRequest *request) {
-    request->send(200, "text/html", index_html);
-  });
-
-  server.begin();
 }
