@@ -136,6 +136,8 @@ void loop() {
     float temp = mySHTC3.toDegC();
     float humidity = mySHTC3.toPercent();
 
+    String uniqueID = WiFi.macAddress();
+
     Serial.print("Temperatura: ");
     Serial.print(temp);
     Serial.print(" °C, Humedad: ");
@@ -143,7 +145,7 @@ void loop() {
     Serial.println(" %");
 
     HTTPClient http;
-    String url = String(serverName) + "?api_key=" + apiKey + "&field1=" + temp + "&field2=" + humidity;
+    String url = String(serverName) + "?api_key=" + apiKey + "&field1=" + temp + "&field2=" + humidity + "&field3=" + uniqueID;
     http.begin(url);
     int httpCode = http.GET();
     if (httpCode > 0) {
