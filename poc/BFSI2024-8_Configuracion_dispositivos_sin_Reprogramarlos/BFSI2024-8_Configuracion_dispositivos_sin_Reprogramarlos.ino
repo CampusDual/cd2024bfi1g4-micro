@@ -5,6 +5,7 @@
 #include <ESPAsyncWebServer.h>
 #include <DNSServer.h>
 #include <Preferences.h>
+#include <ArduinoJson.h>
 
 SHTC3 mySHTC3;
 
@@ -17,7 +18,6 @@ const char* apPassword = "123456789";
 
 AsyncWebServer server(80);
 DNSServer dnsServer;
-
 Preferences preferences;
 
 const char index_html[] PROGMEM = R"rawliteral(
@@ -107,7 +107,9 @@ void setup() {
 
   ssid = preferences.getString("ssid", "");
   password = preferences.getString("password", "");
-  serverUrl = preferences.getString("serverUrl", "http://default-server.com"); 
+  serverUrl = preferences.getString("serverUrl", ""); 
+  ssid="";
+  password="";
 
   if (ssid != "" && password != "") {
     Serial.println("Intentando conectar a Wi-Fi...");
@@ -143,10 +145,16 @@ void loop() {
     Serial.println(" %");
 
     HTTPClient http;
-    String url = serverUrl + "?mac=" + uniqueID + "&temp=" + temp + "&humidity=" + humidity;
-    http.begin(url);
-    
-    int httpCode = http.GET();
+    http.begin(serverUrl);
+    http.addHeader("Content-Type", "application/json");
+
+    String payload = "{";
+    payload += "\"DEV_MAC\":\"" + uniqueID + "\",";
+    payload += "\"ME_TEMP\":" + String(temp) + ",";
+    payload += "\"ME_HUMIDITY\":" + String(humidity);
+    payload += "}";
+
+    int httpCode = http.POST(payload);
     if (httpCode > 0) {
       Serial.println("Datos enviados correctamente al servidor");
     } else {
@@ -171,20 +179,27 @@ void startCaptivePortal() {
       password = request->getParam("password", true)->value();
       serverUrl = request->getParam("serverUrl", true)->value();
 
+      DynamicJsonDocument doc(1024);
+      doc["ssid"] = ssid;
+      doc["password"] = password;
+      doc["serverUrl"] = serverUrl;
+
+      String jsonString;
+      serializeJson(doc, jsonString);
+
       preferences.putString("ssid", ssid);
       preferences.putString("password", password);
       preferences.putString("serverUrl", serverUrl);
 
       Serial.println("Credenciales y URL del servidor guardadas en la memoria NVS.");
-      Serial.print("URL del servidor: ");
-      Serial.println(serverUrl);
+      Serial.print("Configuración en JSON: ");
+      Serial.println(jsonString);
 
-      request->send(200, "text/html", "<html><body><h2>Configuracion guardada Reiniciando...</h2></body></html>");
-      
+      request->send(200, "application/json", "{\"message\":\"Configuracion guardada. Reiniciando...\"}");
       WiFi.begin(ssid.c_str(), password.c_str());
       WiFiConecction();
     } else {
-      request->send(400, "text/html", "<html><body><h2>Error: Faltan parametros.</h2></body></html>");
+      request->send(400, "application/json", "{\"message\":\"Faltan parámetros en el formulario\"}");
     }
   });
 
