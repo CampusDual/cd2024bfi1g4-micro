@@ -105,6 +105,7 @@ void setup() {
 
   preferences.begin("wifiCreds", false);
 
+
   ssid = preferences.getString("ssid", "");
   password = preferences.getString("password", "");
   serverUrl = preferences.getString("serverUrl", ""); 
@@ -148,18 +149,23 @@ void loop() {
     http.begin(serverUrl);
     http.addHeader("Content-Type", "application/json");
 
-    String payload = "{";
-    payload += "\"DEV_MAC\":\"" + uniqueID + "\",";
+    String payload = "{\"data\": {";
+    payload += "\"DEV_MAC\":\"" + WiFi.macAddress() + "\",";
     payload += "\"ME_TEMP\":" + String(temp) + ",";
     payload += "\"ME_HUMIDITY\":" + String(humidity);
-    payload += "}";
+    payload += "}}";
+
 
     int httpCode = http.POST(payload);
+
     if (httpCode > 0) {
-      Serial.println("Datos enviados correctamente al servidor");
+        Serial.printf("Código de respuesta del servidor: %d\n", httpCode);
+        String response = http.getString(); 
+ 
     } else {
-      Serial.println("Error al enviar datos al servidor");
+        Serial.printf("Error en la conexión: %s\n", http.errorToString(httpCode).c_str());
     }
+
     http.end();
   }
 
@@ -179,6 +185,10 @@ void startCaptivePortal() {
       password = request->getParam("password", true)->value();
       serverUrl = request->getParam("serverUrl", true)->value();
 
+      if (!serverUrl.startsWith("http://")) {
+        serverUrl = "http://" + serverUrl;
+      }
+
       DynamicJsonDocument doc(1024);
       doc["ssid"] = ssid;
       doc["password"] = password;
@@ -195,11 +205,11 @@ void startCaptivePortal() {
       Serial.print("Configuración en JSON: ");
       Serial.println(jsonString);
 
-      request->send(200, "application/json", "{\"message\":\"Configuracion guardada. Reiniciando...\"}");
+       request->send(200, "text/html", "<html><body><h2>Configuracion guardada Reiniciando...</h2></body></html>");
       WiFi.begin(ssid.c_str(), password.c_str());
       WiFiConecction();
     } else {
-      request->send(400, "application/json", "{\"message\":\"Faltan parámetros en el formulario\"}");
+      request->send(400, "text/html", "<html><body><h2>Error: Faltan parametros.</h2></body></html>");
     }
   });
 
@@ -221,6 +231,7 @@ void WiFiConecction() {
     Serial.println("Conexión Wi-Fi exitosa!");
     Serial.print("IP del dispositivo: ");
     Serial.println(WiFi.localIP());
+   
   } else {
     Serial.println("No se pudo conectar a Wi-Fi. Iniciando AP...");
     WiFi.softAP(apSSID, apPassword);
