@@ -185,8 +185,8 @@ void startCaptivePortal() {
       password = request->getParam("password", true)->value();
       serverUrl = request->getParam("serverUrl", true)->value();
 
-      if (!serverUrl.startsWith("http://")) {
-        serverUrl = "http://" + serverUrl;
+      if (!serverUrl.startsWith("https://")) {
+        serverUrl = "https://" + serverUrl;
       }
 
       DynamicJsonDocument doc(1024);
