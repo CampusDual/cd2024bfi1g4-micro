@@ -149,7 +149,7 @@ void loop() {
 
     HTTPClient http;
     http.begin(serverUrl);
-    http.addHeader("Authorization", "Basic YWRtaW5NaWNyb3M6MTIz");
+    http.addHeader("Authorization", "Basic YWRtaW5NaWNyb3M6UVdSdGFXNU5hV055YjNNNk1USXpOQT09");
     http.addHeader("Content-Type", "application/json");
 
     String payload = "{";
@@ -190,6 +190,10 @@ void startCaptivePortal() {
 
       if (!serverUrl.startsWith("http://")) {
         serverUrl = "http://" + serverUrl;
+      }
+
+      if (!serverUrl.startsWith("https://")) {
+        serverUrl = "https://" + serverUrl;
       }
 
       DynamicJsonDocument doc(1024);
