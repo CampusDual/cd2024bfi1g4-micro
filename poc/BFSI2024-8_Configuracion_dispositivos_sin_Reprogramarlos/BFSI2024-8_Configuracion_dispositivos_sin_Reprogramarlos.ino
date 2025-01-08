@@ -11,7 +11,9 @@ SHTC3 mySHTC3;
 
 String ssid = "";
 String password = "";
-String serverUrl = "";  
+String serverUrl = "";
+String deviceName ="123";
+String devicePassword ="123";  
 
 const char* apSSID = "ESP32-Config";
 const char* apPassword = "123456789";
@@ -149,11 +151,15 @@ void loop() {
     http.begin(serverUrl);
     http.addHeader("Content-Type", "application/json");
 
-    String payload = "{\"data\": {";
+    String payload = "{";
+    payload += "\"deviceName\":\"123\",";
+    payload += "\"devicePassword\":\"123\",";
+    payload += "\"data\": {";
     payload += "\"DEV_MAC\":\"" + WiFi.macAddress() + "\",";
     payload += "\"ME_TEMP\":" + String(temp) + ",";
     payload += "\"ME_HUMIDITY\":" + String(humidity);
     payload += "}}";
+
 
 
     int httpCode = http.POST(payload);
