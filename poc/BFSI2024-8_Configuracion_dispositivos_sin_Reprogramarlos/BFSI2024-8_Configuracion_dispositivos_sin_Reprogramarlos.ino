@@ -149,18 +149,15 @@ void loop() {
 
     HTTPClient http;
     http.begin(serverUrl);
+    http.addHeader("Authorization", "Basic YWRtaW5NaWNyb3M6MTIz");
     http.addHeader("Content-Type", "application/json");
 
     String payload = "{";
-    payload += "\"deviceName\":\"123\",";
-    payload += "\"devicePassword\":\"123\",";
     payload += "\"data\": {";
     payload += "\"DEV_MAC\":\"" + WiFi.macAddress() + "\",";
     payload += "\"ME_TEMP\":" + String(temp) + ",";
     payload += "\"ME_HUMIDITY\":" + String(humidity);
     payload += "}}";
-
-
 
     int httpCode = http.POST(payload);
 
@@ -191,8 +188,8 @@ void startCaptivePortal() {
       password = request->getParam("password", true)->value();
       serverUrl = request->getParam("serverUrl", true)->value();
 
-      if (!serverUrl.startsWith("https://")) {
-        serverUrl = "https://" + serverUrl;
+      if (!serverUrl.startsWith("http://")) {
+        serverUrl = "http://" + serverUrl;
       }
 
       DynamicJsonDocument doc(1024);
