@@ -149,7 +149,7 @@ void loop() {
 
     HTTPClient http;
     http.begin(serverUrl);
-    http.addHeader("Authorization", "Basic YWRtaW5NaWNyb3M6UVdSdGFXNU5hV055YjNNNk1USXpOQT09");
+    http.addHeader("Authorization", "Basic YWRtaW5NaWNyb3M6YWRtaW5taWNyb3MxMjM=");
     http.addHeader("Content-Type", "application/json");
 
     String payload = "{";
@@ -187,14 +187,6 @@ void startCaptivePortal() {
       ssid = request->getParam("ssid", true)->value();
       password = request->getParam("password", true)->value();
       serverUrl = request->getParam("serverUrl", true)->value();
-
-      if (!serverUrl.startsWith("http://")) {
-        serverUrl = "http://" + serverUrl;
-      }
-
-      if (!serverUrl.startsWith("https://")) {
-        serverUrl = "https://" + serverUrl;
-      }
 
       DynamicJsonDocument doc(1024);
       doc["ssid"] = ssid;
